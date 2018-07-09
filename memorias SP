@@ -1,0 +1,36 @@
+
+2
+votar en contra
+aceptada
+Diferencias:
+
+ExecuteNonQuery ejecutará el Stored Procedure y no te devolverá ningún resultado
+ExecuteScalar te revolverá un solo dato, con el cual podrás hacer uso del lado de tu aplicación
+ExecuteReader se utiliza cuando deseas obtener un conjunto de datos, es decir, múltiples filas y múltiples columnas.
+Ahora, tomando como referencia el Stored Procedure
+
+ALTER PROCEDURE dbo.PersonaDoc @cDocumento VARCHAR(20) @resultado INT OUTPUT
+AS
+    SELECT @resultado = nombre
+    FROM Persona
+    WHERE (documento = @cDocumento)
+Al ejecutar:
+
+ExecuteNonQuery no obtendrás resultado
+ExecuteScalar te revolverá null dado que en el SELECT realizas una asignación con @resultado = nombre, para retornar un resultado deberás agregar SELECT @resultado al final de tu Stored Procedure
+ExecuteReader de igual forma te devolverá null, deberás hacer lo mismo que el ExecuteScalar o en su caso un SELECT * FROM Persona (a modo de ejemplo)
+Actualización
+Con el OUTPUT haces una referencia por valor a la variable que tienes asignada como valor de salida, en el caso de tu Stored Procedure podrías usar ExecuteScalar o bien, OUTPUT, ambas se pueden ajustar a la forma en que programes. Si utilizas C#, un ejemplo de código sería el siguente para obtener el valor del documento usando Direction = ParameterDirection.Output;:
+
+using(SqlConnection conn = new SqlConnection(ConnectionString ))
+    using(SqlCommand cmd = new SqlCommand("PersonaDoc", conn))
+    {
+        cmd.CommandType = CommandType.StoredProcedure;
+        cmd.Parameters.Add("@cDocumento", SqlDbType.VarChar, 20).Direction = ParameterDirection.Output;
+
+        conn.Open();
+        cmd.ExecuteNonQuery();
+
+        string documentoId = Convert.ToInt32(cmd.Parameters["@cDocumento"].Value);
+        conn.Close();
+    }
